@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NeuroCube – 3D IQ Arena</title>
+<style>
+:root{--bg:#070a1c;--glass:rgba(255,255,255,.07);--line:rgba(255,255,255,.14);--a:#39d0ff;--b:#ff4fd8;--ok:#34d399;--bad:#fb7185;--txt:#eef2ff;--mut:#9aa6d6}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+#app{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:18px 16px 40px}
+.hidden{display:none!important}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.top{text-align:center;padding:18px 0 10px}
+.logo{font-size:clamp(34px,7vw,64px);font-weight:900;letter-spacing:3px;
+ text-shadow:0 1px 0 #1b6e8c,0 2px 0 #19627d,0 3px 0 #165670,0 4px 0 #134a62,0 5px 0 #103e54,0 14px 30px rgba(57,208,255,.6)}
+.logo span{background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;filter:drop-shadow(0 4px 0 #6a1f5c)}
+.tag{color:var(--mut);margin:6px 0 0}
+.iq{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 20px;margin:14px 0 22px;flex-wrap:wrap}
+.iq small{color:var(--mut)}
+#iqNum{font-size:44px;font-weight:900;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1}
+#iqNote{color:var(--mut);flex:1;min-width:140px}
+.btn{border:0;cursor:pointer;color:#fff;font-weight:700;font-size:15px;padding:11px 20px;border-radius:12px;background:linear-gradient(135deg,var(--a),var(--b));box-shadow:0 6px 0 rgba(0,0,0,.35),0 10px 24px rgba(57,208,255,.25);transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.btn.ghost{background:var(--glass);border:1px solid var(--line);box-shadow:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;perspective:1100px}
+.card{position:relative;padding:20px 16px 16px;cursor:pointer;transform-style:preserve-3d;transition:transform .15s ease-out,box-shadow .2s;min-height:190px;display:flex;flex-direction:column;gap:6px}
+.card:hover{box-shadow:0 20px 60px rgba(57,208,255,.28)}
+.card .ico{font-size:46px;transform:translateZ(55px);filter:drop-shadow(0 10px 8px rgba(0,0,0,.5))}
+.card h3{margin:4px 0 0;font-size:18px;transform:translateZ(35px)}
+.card p{margin:0;color:var(--mut);font-size:13px;line-height:1.4;transform:translateZ(20px)}
+.card .meta{margin-top:auto;display:flex;justify-content:space-between;font-size:12px;transform:translateZ(30px)}
+.pill{padding:3px 9px;border-radius:99px;background:rgba(57,208,255,.16);color:var(--a);font-weight:600}
+.best{color:#ffd166;font-weight:700}
+footer{text-align:center;color:var(--mut);font-size:12px;margin-top:30px}
+.gtop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+#gTitle{font-weight:800;font-size:18px;text-align:center}
+.stat{font-size:18px;min-width:70px;text-align:right}
+.prog,.tw{height:8px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden}
+#bar{height:100%;width:0;background:linear-gradient(90deg,var(--a),var(--b));transition:width .4s}
+.roundline{text-align:center;color:var(--mut);margin:8px 0}
+.tw{height:6px;margin-bottom:12px}
+#tbar{height:100%;width:100%;background:linear-gradient(90deg,#ffd166,#fb7185);opacity:.2}
+.panel{padding:18px;min-height:380px;display:flex;flex-direction:column}
+#stage{flex:1;display:flex;flex-direction:column;align-items:center;gap:14px;justify-content:center;width:100%}
+#fb{min-height:26px;text-align:center;font-weight:700;margin-top:8px}
+#fb.ok{color:var(--ok)}#fb.bad{color:var(--bad)}
+.q{font-size:clamp(20px,4.5vw,30px);font-weight:800;text-align:center;line-height:1.3}
+.hint{color:var(--mut);text-align:center}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:460px}
+.opt{border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--txt);font-size:18px;font-weight:700;padding:14px 10px;border-radius:14px;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.35);transition:transform .08s,background .15s;display:flex;align-items:center;justify-content:center;min-height:56px}
+.opt:hover{background:rgba(255,255,255,.16)}
+.opt:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.opt.good{background:rgba(52,211,153,.35);border-color:var(--ok)}
+.opt.bad{background:rgba(251,113,133,.35);border-color:var(--bad)}
+.opt svg{width:70px;height:70px}
+.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:min(300px,86vw)}
+.tile{aspect-ratio:1;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid var(--line);cursor:pointer;box-shadow:0 6px 0 rgba(0,0,0,.35);transition:all .12s}
+.tile.lit{background:linear-gradient(135deg,var(--a),var(--b));box-shadow:0 0 34px var(--a);transform:translateY(-3px) scale(1.04)}
+.ogrid{display:grid;gap:8px;width:min(330px,88vw)}
+.otile{aspect-ratio:1;border-radius:12px;border:0;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.25)}
+.otile:active{transform:translateY(3px)}
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(270px,80vw)}
+.mcell{aspect-ratio:1;border-radius:12px;background:rgba(255,255,255,.09);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;color:var(--a)}
+.mcell svg{width:100%;height:100%}
+.vrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.vwrap{text-align:center;color:var(--mut);font-size:13px}
+.vcanvas{display:block;border-radius:16px;background:radial-gradient(circle at 50% 35%,rgba(57,208,255,.18),rgba(255,255,255,.04));border:1px solid var(--line);touch-action:none;cursor:grab}
+.vcanvas:active{cursor:grabbing}
+.tin{font-size:24px;text-align:center;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:var(--txt);width:min(300px,86vw);outline:none;letter-spacing:3px;text-transform:uppercase}
+.tin:focus{border-color:var(--a)}
+.letters{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.letters b{width:46px;height:54px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:26px;background:linear-gradient(160deg,#233a6b,#16214a);border:1px solid var(--line);box-shadow:0 5px 0 rgba(0,0,0,.4)}
+.stroop{font-size:clamp(50px,14vw,90px);font-weight:900;letter-spacing:4px;text-shadow:0 5px 0 rgba(0,0,0,.4)}
+#modal{position:fixed;inset:0;z-index:10;background:rgba(3,5,15,.75);display:flex;align-items:center;justify-content:center;padding:20px}
+.mbox{padding:28px;text-align:center;max-width:380px;width:100%;animation:pop .35s}
+@keyframes pop{from{transform:scale(.7) rotateX(40deg);opacity:0}to{transform:none;opacity:1}}
+.mbox h2{margin:0 0 6px;font-size:28px}
+#mScore{font-size:64px;font-weight:900;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.row{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+@media(max-width:520px){.grid{grid-template-columns:1fr 1fr;gap:12px}.card{min-height:170px;padding:14px 12px}.card .ico{font-size:36px}.card h3{font-size:15px}.card p{font-size:11.5px}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div id="app">
+  <section id="hub">
+    <header class="top">
+      <div class="logo">NEURO<span>CUBE</span></div>
+      <p class="tag">The 3D IQ Arena — 10 brain games to sharpen your mind</p>
+    </header>
+    <div class="iq glass">
+      <div><small>Your Brain Score (fun estimate)</small><div id="iqNum">--</div></div>
+      <div id="iqNote">Play 3 games to unlock your score</div>
+      <button class="btn ghost" id="resetBtn">Reset scores</button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <footer>For fun only — this is not a clinical IQ test.</footer>
+  </section>
+
+  <section id="game" class="hidden">
+    <div class="gtop">
+      <button class="btn ghost" id="backBtn">← Menu</button>
+      <div id="gTitle"></div>
+      <div class="stat">⭐ <b id="gScore">0</b></div>
+    </div>
+    <div class="prog"><div id="bar"></div></div>
+    <div class="roundline"><span id="gRound"></span></div>
+    <div class="tw"><div id="tbar"></div></div>
+    <div class="panel glass">
+      <div id="stage"></div>
+      <div id="fb"></div>
+    </div>
+  </section>
+</div>
+
+<div id="modal" class="hidden">
+  <div class="mbox glass">
+    <h2 id="mTitle"></h2>
+    <div id="mScore"></div>
+    <p id="mMsg" style="color:var(--mut)"></p>
+    <div class="row"><button class="btn" id="again">Play again</button><button class="btn ghost" id="toMenu">Menu</button></div>
+  </div>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js"}}</script>
+<script type="module">
+let THREE = null;
+try { THREE = await import('three'); } catch (e) { console.warn('3D library failed to load', e); }
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const rnd = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const pick = a => a[rnd(0, a.length - 1)];
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = rnd(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const h = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+
+/* ---------- 3D animated background ---------- */
+(function () {
+  if (!THREE) return;
+  const canvas = $('#bg');
+  const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  r.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x070a1c, 0.028);
+  const cam = new THREE.PerspectiveCamera(60, 1, 0.1, 200);
+  cam.position.z = 22;
+  scene.add(new THREE.AmbientLight(0x8899ff, 0.7));
+  const p1 = new THREE.PointLight(0xff4fd8, 3, 90); p1.position.set(12, 10, 15); scene.add(p1);
+  const p2 = new THREE.PointLight(0x39d0ff, 3, 90); p2.position.set(-14, -8, 10); scene.add(p2);
+  const geos = [new THREE.IcosahedronGeometry(1.4), new THREE.OctahedronGeometry(1.5), new THREE.BoxGeometry(1.8, 1.8, 1.8),
+    new THREE.TorusKnotGeometry(1, 0.3, 80, 12), new THREE.TorusGeometry(1.2, 0.4, 12, 32), new THREE.TetrahedronGeometry(1.6)];
+  const cols = [0x39d0ff, 0xff4fd8, 0x8b5cf6, 0xffd166, 0x34d399];
+  const meshes = [];
+  for (let i = 0; i < 34; i++) {
+    const c = pick(cols);
+    const m = new THREE.Mesh(pick(geos), new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.18, roughness: 0.3, metalness: 0.6, wireframe: Math.random() < 0.5 }));
+    m.position.set((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 36, -35 + Math.random() * 42);
+    m.userData = { sx: (Math.random() - 0.5) * 0.012, sy: (Math.random() - 0.5) * 0.012, f: Math.random() * 6, y0: m.position.y };
+    const s = 0.6 + Math.random() * 1.2; m.scale.set(s, s, s);
+    scene.add(m); meshes.push(m);
+  }
+  const sp = new Float32Array(900);
+  for (let i = 0; i < 900; i++) sp[i] = (Math.random() - 0.5) * 120;
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+  scene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.12, transparent: true, opacity: 0.7 })));
+  let mx = 0, my = 0;
+  addEventListener('pointermove', e => { mx = (e.clientX / innerWidth - 0.5); my = (e.clientY / innerHeight - 0.5); });
+  const resize = () => { r.setSize(innerWidth, innerHeight, false); cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); };
+  addEventListener('resize', resize); resize();
+  let t = 0;
+  (function loop() {
+    t += 0.01;
+    meshes.forEach(m => { m.rotation.x += m.userData.sx; m.rotation.y += m.userData.sy; m.position.y = m.userData.y0 + Math.sin(t + m.userData.f) * 1.2; });
+    cam.position.x += (mx * 8 - cam.position.x) * 0.04;
+    cam.position.y += (-my * 5 - cam.position.y) * 0.04;
+    cam.lookAt(0, 0, 0);
+    r.render(scene, cam);
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ---------- reusable 3D cube viewer (drag to rotate) ---------- */
+function makeViewer(api, size, camZ = 12) {
+  if (!THREE) return { c: h('div', 'hint', '⚠ The 3D engine could not load. Check your internet connection and reload the page.'), setCubes() {}, group: {} };
+  const c = document.createElement('canvas'); c.className = 'vcanvas';
+  const r = new THREE.WebGLRenderer({ canvas: c, antialias: true, alpha: true });
+  r.setPixelRatio(Math.min(devicePixelRatio, 2)); r.setSize(size, size);
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(40, 1, 0.1, 100); cam.position.set(0, 0, camZ);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+  const dl = new THREE.DirectionalLight(0xffffff, 1.2); dl.position.set(4, 6, 8); scene.add(dl);
+  const group = new THREE.Group(); scene.add(group); group.rotation.set(0.5, 0.7, 0);
+  let drag = false, lx = 0, ly = 0;
+  c.addEventListener('pointerdown', e => { drag = true; lx = e.clientX; ly = e.clientY; c.setPointerCapture(e.pointerId); });
+  c.addEventListener('pointermove', e => { if (!drag) return; group.rotation.y += (e.clientX - lx) * 0.012; group.rotation.x += (e.clientY - ly) * 0.012; lx = e.clientX; ly = e.clientY; });
+  c.addEventListener('pointerup', () => drag = false);
+  let raf; (function loop() { r.render(scene, cam); raf = requestAnimationFrame(loop); })();
+  api.onClean(() => { cancelAnimationFrame(raf); r.dispose(); });
+  const box = new THREE.BoxGeometry(0.96, 0.96, 0.96), edges = new THREE.EdgesGeometry(box);
+  const lmat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.5 });
+  function setCubes(pts, colorFn) {
+    while (group.children.length) group.remove(group.children[0]);
+    const cx = pts.reduce((s, p) => s + p[0], 0) / pts.length, cy = pts.reduce((s, p) => s + p[1], 0) / pts.length, cz = pts.reduce((s, p) => s + p[2], 0) / pts.length;
+    pts.forEach(p => {
+      const m = new THREE.Mesh(box, new THREE.MeshStandardMaterial({ color: colorFn(p), roughness: 0.35, metalness: 0.1 }));
+      m.position.set(p[0] - cx, p[1] - cy, p[2] - cz);
+      m.add(new THREE.LineSegments(edges, lmat));
+      group.add(m);
+    });
+  }
+  return { c, group, setCubes };
+}
+
+/* ---------- shared UI helpers for games ---------- */
+function choices(stage, api, opts, ansIdx, render) {
+  const box = h('div', 'choices');
+  opts.forEach((o, i) => {
+    const b = h('button', 'opt');
+    if (render) b.append(render(o)); else b.textContent = o;
+    b.onclick = () => {
+      if (api.locked) return;
+      b.classList.add(i === ansIdx ? 'good' : 'bad');
+      if (i !== ansIdx) box.children[ansIdx].classList.add('good');
+      api.answer(i === ansIdx);
+    };
+    box.append(b);
+  });
+  stage.append(box);
+  api.ans = render ? null : opts[ansIdx];
+  api.reveal = () => box.children[ansIdx].classList.add('good');
+  return box;
+}
+function numOptions(ans, spread = 6) {
+  const s = new Set([ans]);
+  let guard = 0;
+  while (s.size < 4 && guard++ < 200) { const v = ans + rnd(-spread, spread); if (v !== ans && v > 0) s.add(v); }
+  while (s.size < 4) s.add(ans + s.size * 7);
+  return shuffle([...s]);
+}
+
+/* ---------- 3D polycube maths (for mental rotation) ---------- */
+const rotX = ([x, y, z]) => [x, -z, y], rotY = ([x, y, z]) => [z, y, -x], rotZ = ([x, y, z]) => [-y, x, z];
+const mirror = pts => pts.map(([x, y, z]) => [-x, y, z]);
+function norm(pts) {
+  const mx = Math.min(...pts.map(p => p[0])), my = Math.min(...pts.map(p => p[1])), mz = Math.min(...pts.map(p => p[2]));
+  return pts.map(p => [p[0] - mx, p[1] - my, p[2] - mz].join(',')).sort().join('|');
+}
+function allRots(pts) {
+  const seen = new Map([[norm(pts), pts]]); let fr = [pts];
+  while (fr.length) { const nf = []; for (const s of fr) for (const f of [rotX, rotY, rotZ]) { const t = s.map(f), k = norm(t); if (!seen.has(k)) { seen.set(k, t); nf.push(t); } } fr = nf; }
+  return seen;
+}
+function randShape(n) {
+  const dirs = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+  for (let t = 0; t < 600; t++) {
+    const pts = [[0, 0, 0]], set = new Set(['0,0,0']);
+    while (pts.length < n) { const b = pick(pts), d = pick(dirs), p = [b[0] + d[0], b[1] + d[1], b[2] + d[2]]; if (!set.has(p.join(','))) { set.add(p.join(',')); pts.push(p); } }
+    const rots = allRots(pts);
+    if (!rots.has(norm(mirror(pts)))) return { pts, rots };   // chiral = mirror really differs
+  }
+  const pts = [[0, 0, 0], [1, 0, 0], [2, 0, 0], [2, 1, 0], [2, 1, 1]];
+  return { pts, rots: allRots(pts) };
+}
+
+/* ---------- matrix puzzle drawing ---------- */
+const SHAPES = ['circle', 'square', 'triangle'], COLORS = ['#ff5a7a', '#4ade80', '#60a5fa'];
+function shapeSVG(shape, count, color) {
+  const xs = count === 1 ? [50] : count === 2 ? [32, 68] : [22, 50, 78], s = count === 1 ? 30 : count === 2 ? 24 : 18;
+  const inner = xs.map(x => shape === 'circle' ? `<circle cx="${x}" cy="50" r="${s * .6}" fill="${color}"/>`
+    : shape === 'square' ? `<rect x="${x - s * .55}" y="${50 - s * .55}" width="${s * 1.1}" height="${s * 1.1}" rx="3" fill="${color}"/>`
+    : `<polygon points="${x},${50 - s * .7} ${x + s * .7},${50 + s * .6} ${x - s * .7},${50 + s * .6}" fill="${color}"/>`).join('');
+  return `<svg viewBox="0 0 100 100">${inner}</svg>`;
+}
+
+/* ---------- content banks ---------- */
+const WORDS = {
+  easy: ['tiger', 'zebra', 'piano', 'mango', 'cloud', 'river', 'apple', 'grape', 'bacon', 'house', 'plant', 'sugar'],
+  mid: ['jungle', 'rocket', 'bridge', 'window', 'pencil', 'market', 'dragon', 'forest', 'island', 'button', 'shadow', 'camera', 'guitar', 'rabbit', 'pillow', 'basket'],
+  hard: ['thunder', 'diamond', 'journey', 'kingdom', 'pyramid', 'volcano', 'library', 'mystery', 'whisper', 'balance', 'network', 'compass', 'harvest', 'horizon']
+};
+const LOGIC = [
+  ['All roses are flowers. Some flowers fade quickly. Which is most reasonable?', ['Some roses may fade quickly', 'All roses fade quickly', 'No roses fade', 'Roses are not flowers'], 0],
+  ['Tom is taller than Sam. Sam is taller than Raj. Who is the shortest?', ['Tom', 'Sam', 'Raj', 'Cannot tell'], 2],
+  ['A is B\'s sister. B is C\'s father. How is A related to C?', ['Mother', 'Aunt', 'Cousin', 'Grandmother'], 1],
+  ['Which number does not belong: 2, 3, 5, 9, 11?', ['2', '5', '9', '11'], 2],
+  ['Book is to reading as fork is to…', ['Eating', 'Cooking', 'Kitchen', 'Metal'], 0],
+  ['5 machines make 5 widgets in 5 minutes. How long for 100 machines to make 100 widgets?', ['100 min', '20 min', '5 min', '1 min'], 2],
+  ['A bat and a ball cost $1.10. The bat costs $1.00 more than the ball. The ball costs…', ['10 cents', '5 cents', '1 cent', '15 cents'], 1],
+  ['Mary\'s father has 4 daughters: Nana, Nene, Nini and ___?', ['Nono', 'Nunu', 'Mary', 'Nina'], 2],
+  ['How many months have at least 28 days?', ['1', '2', '11', '12'], 3],
+  ['Rearrange the letters "CIFAIPC" to get the name of a…', ['City', 'Animal', 'Ocean', 'Country'], 2],
+  ['Which is heavier: 1 kg of iron or 1 kg of feathers?', ['Iron', 'Feathers', 'They weigh the same', 'Depends on size'], 2],
+  ['Next in the series: J, F, M, A, M, J, ?', ['J', 'A', 'S', 'O'], 0],
+  ['Odd one out: Apple, Banana, Carrot, Mango', ['Apple', 'Banana', 'Carrot', 'Mango'], 2],
+  ['A farmer has 17 sheep. All but 9 run away. How many are left?', ['8', '9', '17', '0'], 1],
+  ['You are in a race and overtake the person in 2nd place. Your position now?', ['1st', '2nd', '3rd', 'Last'], 1],
+  ['A doctor gives you 3 pills: take one every 30 minutes. How long until all are taken?', ['30 min', '1 hour', '1.5 hours', '2 hours'], 1],
+  ['If all Bloops are Razzies and all Razzies are Lazzies, then all Bloops are…', ['Lazzies', 'Not Lazzies', 'Only some Lazzies', 'Cannot say'], 0],
+  ['Which comes next: 1, 1, 2, 3, 5, 8, ?', ['11', '12', '13', '15'], 2]
+];
+const INK = [['RED', '#ff4d6d'], ['BLUE', '#4dabff'], ['GREEN', '#3ddc84'], ['YELLOW', '#ffd166'], ['PURPLE', '#b388ff'], ['ORANGE', '#ff9f43']];
+
+/* ---------- the 10 games ---------- */
+const GAMES = [
+  { id: 'pattern', icon: '🟦', name: 'Pattern Recall', tag: 'Memory', desc: 'Watch the tiles light up, then repeat the sequence.',
+    round(stage, api, r) {
+      const len = 3 + Math.floor(r / 2), seq = [];
+      for (let i = 0; i < len; i++) { let v; do { v = rnd(0, 8); } while (v === seq[i - 1]); seq.push(v); }
+      const info = h('div', 'hint', 'Watch the pattern…'), grid = h('div', 'pgrid'), tiles = [];
+      for (let i = 0; i < 9; i++) { const t = h('div', 'tile'); tiles.push(t); grid.append(t); }
+      stage.append(info, grid);
+      api.ans = null; let input = [], accept = false;
+      (async () => {
+        await sleep(600);
+        for (const i of seq) { if (api.dead) return; tiles[i].classList.add('lit'); await sleep(450); tiles[i].classList.remove('lit'); await sleep(200); }
+        info.textContent = 'Your turn — repeat it!'; accept = true;
+      })();
+      tiles.forEach((t, i) => t.onclick = () => {
+        if (!accept) return;
+        t.classList.add('lit'); setTimeout(() => t.classList.remove('lit'), 160);
+        input.push(i);
+        if (i !== seq[input.length - 1]) { accept = false; api.answer(false); }
+        else if (input.length === len) { accept = false; api.answer(true); }
+      });
+    } },
+
+  { id: 'sequence', icon: '🔢', name: 'Number Sequence', tag: 'Logic', desc: 'Find the number that continues the pattern.', time: 25,
+    round(stage, api, r) {
+      const t = r < 3 ? rnd(0, 1) : rnd(0, 5); let s = [];
+      if (t === 0) { const a = rnd(1, 20), d = rnd(2, 9); for (let i = 0; i < 6; i++) s.push(a + d * i); }
+      else if (t === 1) { const a = rnd(1, 5), m = rnd(2, 3); for (let i = 0; i < 6; i++) s.push(a * m ** i); }
+      else if (t === 2) { let v = rnd(1, 6); const d = rnd(1, 3); for (let i = 0; i < 6; i++) { s.push(v); v += d * (i + 1); } }
+      else if (t === 3) { const n = rnd(1, 5), k = rnd(0, 4); for (let i = 0; i < 6; i++) s.push((n + i) ** 2 + k); }
+      else if (t === 4) { s = [rnd(1, 5), rnd(2, 6)]; while (s.length < 6) s.push(s[s.length - 1] + s[s.length - 2]); }
+      else { const a = rnd(1, 10), b = rnd(20, 40), d = rnd(2, 5), e = rnd(2, 6); for (let i = 0; i < 6; i++) s.push(i % 2 === 0 ? a + (i / 2) * d : b + ((i - 1) / 2) * e); }
+      const ans = s[5], opts = numOptions(ans, 8);
+      stage.append(h('div', 'hint', 'What comes next?'), h('div', 'q', s.slice(0, 5).join(' , ') + ' , <span style="color:var(--b)">?</span>'));
+      choices(stage, api, opts, opts.indexOf(ans));
+    } },
+
+  { id: 'math', icon: '➗', name: 'Speed Math', tag: 'Numeracy', desc: 'Solve mental arithmetic before the clock runs out.', time: r => Math.max(8, 14 - Math.floor(r / 2)),
+    round(stage, api, r) {
+      let txt, ans;
+      if (r < 3) { const a = rnd(12, 89), b = rnd(11, 60); if (Math.random() < .5) { txt = `${a} + ${b}`; ans = a + b; } else { txt = `${a + b} − ${b}`; ans = a; } }
+      else if (r < 6) { const a = rnd(3, 12), b = rnd(3, 12), c = rnd(5, 40); if (Math.random() < .5) { txt = `${a} × ${b}`; ans = a * b; } else { txt = `${a} × ${b} + ${c}`; ans = a * b + c; } }
+      else { const a = rnd(3, 15), b = rnd(2, 12), c = rnd(2, 9); const k = rnd(0, 2); if (k === 0) { txt = `(${a} + ${b}) × ${c}`; ans = (a + b) * c; } else if (k === 1) { txt = `${a * c} ÷ ${c} + ${b} × ${c}`; ans = a + b * c; } else { txt = `${a} × ${b} − ${c} × ${c}`; ans = a * b - c * c; } }
+      const opts = numOptions(ans, 10);
+      stage.append(h('div', 'hint', 'Solve it fast!'), h('div', 'q', txt + ' = ?'));
+      choices(stage, api, opts, opts.indexOf(ans));
+    } },
+
+  { id: 'odd', icon: '🎨', name: 'Odd One Out', tag: 'Perception', desc: 'Spot the tile with the slightly different shade.', time: 12,
+    round(stage, api, r) {
+      const n = r < 3 ? 3 : r < 6 ? 4 : 5, hue = rnd(0, 359), diff = Math.max(6, 22 - r * 2), odd = rnd(0, n * n - 1);
+      stage.append(h('div', 'hint', 'Tap the different tile'));
+      const g = h('div', 'ogrid'); g.style.gridTemplateColumns = `repeat(${n},1fr)`;
+      for (let i = 0; i < n * n; i++) {
+        const b = h('button', 'otile'); b.style.background = `hsl(${hue},70%,${i === odd ? 55 + diff : 55}%)`;
+        b.onclick = () => { if (api.locked) return; if (i !== odd) g.children[odd].style.outline = '4px solid #34d399'; api.answer(i === odd); };
+        g.append(b);
+      }
+      stage.append(g); api.ans = null;
+      api.reveal = () => g.children[odd].style.outline = '4px solid #34d399';
+    } },
+
+  { id: 'rotation', icon: '🧊', name: '3D Rotation', tag: 'Spatial · 3D', desc: 'Are these two 3D shapes identical or mirror images? Drag to rotate!', time: 50,
+    round(stage, api, r) {
+      const n = 5 + (r >= 4 ? 1 : 0) + (r >= 8 ? 1 : 0), { pts, rots } = randShape(n);
+      const same = Math.random() < 0.5;
+      const A = pts, B = pick([...(same ? rots : allRots(mirror(pts))).values()]);
+      const size = Math.min(220, Math.floor((innerWidth - 70) / 2));
+      const v1 = makeViewer(api, size, 11), v2 = makeViewer(api, size, 11);
+      v1.setCubes(A, () => 0xffa94d); v2.setCubes(B, () => 0xffa94d);
+      const row = h('div', 'vrow');
+      [['Shape A', v1], ['Shape B', v2]].forEach(([l, v]) => { const w = h('div', 'vwrap'); w.append(v.c, h('div', '', l)); row.append(w); });
+      stage.append(h('div', 'hint', 'Drag each shape to rotate it. Is B the same as A, or a mirror image?'), row);
+      const box = h('div', 'choices');
+      [['Same shape', true], ['Mirror image', false]].forEach(([lab, val]) => {
+        const b = h('button', 'opt', lab);
+        b.onclick = () => { if (api.locked) return; b.classList.add(val === same ? 'good' : 'bad'); if (val !== same) box.children[same ? 0 : 1].classList.add('good'); api.answer(val === same); };
+        box.append(b);
+      });
+      stage.append(box); api.ans = null; api.reveal = () => box.children[same ? 0 : 1].classList.add('good');
+    } },
+
+  { id: 'matrix', icon: '🧩', name: 'Matrix Logic', tag: 'Abstract', desc: 'Find the missing piece in the 3×3 pattern grid.', time: 45,
+    round(stage, api, r) {
+      const attrs = ['shape', 'count', 'color'], modes = {};
+      const sh = shuffle(attrs);
+      if (r < 4) { modes[sh[0]] = 'row'; modes[sh[1]] = 'col'; modes[sh[2]] = 'fixed'; }
+      else { const m = shuffle(['row', 'col', 'sum']); sh.forEach((a, i) => modes[a] = m[i]); }
+      const fixedVal = rnd(0, 2), perm = {}; attrs.forEach(a => perm[a] = shuffle([0, 1, 2]));
+      const val = (a, rr, cc) => { const m = modes[a]; const i = m === 'row' ? rr : m === 'col' ? cc : m === 'sum' ? (rr + cc) % 3 : fixedVal; return perm[a][i]; };
+      const cell = (rr, cc) => ({ shape: val('shape', rr, cc), count: val('count', rr, cc), color: val('color', rr, cc) });
+      const draw = c => shapeSVG(SHAPES[c.shape], c.count + 1, COLORS[c.color]);
+      const key = c => `${c.shape}${c.count}${c.color}`;
+      const ans = cell(2, 2), opts = [ans], seen = new Set([key(ans)]);
+      let guard = 0;
+      while (opts.length < 4 && guard++ < 100) { const c = { ...ans }; const a = pick(attrs); c[a] = (c[a] + rnd(1, 2)) % 3; if (!seen.has(key(c))) { seen.add(key(c)); opts.push(c); } }
+      const order = shuffle(opts), ansIdx = order.indexOf(ans);
+      const g = h('div', 'mgrid');
+      for (let rr = 0; rr < 3; rr++) for (let cc = 0; cc < 3; cc++) g.append(rr === 2 && cc === 2 ? h('div', 'mcell', '?') : h('div', 'mcell', draw(cell(rr, cc))));
+      stage.append(h('div', 'hint', 'Which piece completes the grid?'), g);
+      choices(stage, api, order, ansIdx, c => { const d = h('div'); d.innerHTML = draw(c); return d.firstChild; });
+    } },
+
+  { id: 'words', icon: '🔤', name: 'Word Scramble', tag: 'Verbal', desc: 'Unscramble the letters to reveal the hidden word.', time: 30,
+    round(stage, api, r) {
+      const w = pick(r < 3 ? WORDS.easy : r < 6 ? WORDS.mid : WORDS.hard);
+      let sc; do { sc = shuffle(w.split('')).join(''); } while (sc === w);
+      const L = h('div', 'letters'); sc.split('').forEach(c => L.append(h('b', '', c.toUpperCase())));
+      const inp = h('input', 'tin'); inp.placeholder = 'type the word'; inp.autocomplete = 'off'; inp.autocapitalize = 'off';
+      const go = h('button', 'btn', 'Submit');
+      const submit = () => { if (api.locked) return; api.answer(inp.value.trim().toLowerCase() === w); };
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); }); go.onclick = submit;
+      stage.append(h('div', 'hint', 'Unscramble the word'), L, inp, go);
+      api.ans = w.toUpperCase(); setTimeout(() => inp.focus(), 50);
+    } },
+
+  { id: 'stroop', icon: '🌈', name: 'Colour Clash', tag: 'Focus', desc: 'Pick the ink colour — not what the word says!', time: r => r < 5 ? 6 : 4,
+    round(stage, api, r) {
+      const word = pick(INK); let ink; do { ink = pick(INK); } while (Math.random() < 0.9 && ink === word);
+      const w = h('div', 'stroop', word[0]); w.style.color = ink[1];
+      stage.append(h('div', 'hint', 'What COLOUR is the text?'), w);
+      const others = shuffle(INK.filter(x => x !== ink)).slice(0, 3), opts = shuffle([ink, ...others]);
+      choices(stage, api, opts.map(o => o[0]), opts.indexOf(ink));
+    } },
+
+  { id: 'logic', icon: '🧠', name: 'Logic Riddles', tag: 'Reasoning', desc: 'Syllogisms, analogies and classic brain-teasers.', time: 30,
+    setup(api) { api.bank = shuffle(LOGIC).slice(0, 10); },
+    round(stage, api, r) {
+      const [q, o, a] = api.bank[r], ordered = shuffle(o.map((t, i) => [t, i === a])), idx = ordered.findIndex(x => x[1]);
+      const qq = h('div', 'q', q); qq.style.fontSize = 'clamp(17px,4vw,24px)';
+      stage.append(qq); choices(stage, api, ordered.map(x => x[0]), idx);
+    } },
+
+  { id: 'count', icon: '📦', name: 'Cube Counter', tag: 'Spatial · 3D', desc: 'Count every cube in the 3D stack — even the hidden ones.', time: 45,
+    round(stage, api, r) {
+      const n = r < 3 ? 3 : 4, maxH = r < 3 ? 2 : r < 6 ? 3 : 4; let pts, hs;
+      do { hs = []; pts = []; for (let x = 0; x < n; x++) for (let z = 0; z < n; z++) { const hh = rnd(0, maxH); for (let y = 0; y < hh; y++) pts.push([x, y, z]); } } while (pts.length < 5);
+      const total = pts.length, size = Math.min(300, innerWidth - 70);
+      const v = makeViewer(api, size, 13);
+      v.setCubes(pts, p => THREE ? new THREE.Color().setHSL(0.52 + p[1] * 0.09, 0.75, 0.55) : 0);
+      stage.append(h('div', 'hint', 'Drag to rotate. How many cubes in total? (Stacks have no gaps underneath.)'), v.c);
+      const opts = numOptions(total, 4); choices(stage, api, opts, opts.indexOf(total));
+    } }
+];
+
+/* ---------- game framework ---------- */
+let cur = null, api = null;
+const best = () => JSON.parse(localStorage.getItem('nc_best') || '{}');
+
+function renderHub() {
+  const b = best(), grid = $('#grid'); grid.innerHTML = '';
+  GAMES.forEach(g => {
+    const c = h('div', 'card glass');
+    c.innerHTML = `<div class="ico">${g.icon}</div><h3>${g.name}</h3><p>${g.desc}</p><div class="meta"><span class="pill">${g.tag}</span><span class="best">${b[g.id] != null ? '🏆 ' + b[g.id] : 'New'}</span></div>`;
+    c.onclick = () => startGame(g);
+    c.addEventListener('pointermove', e => { const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5; c.style.transform = `rotateY(${x * 22}deg) rotateX(${-y * 22}deg) translateZ(14px)`; });
+    c.addEventListener('pointerleave', () => c.style.transform = '');
+    grid.append(c);
+  });
+  const vals = Object.values(b);
+  if (vals.length >= 3) { const avg = vals.reduce((s, v) => s + v, 0) / vals.length; $('#iqNum').textContent = Math.round(75 + avg * 0.65); $('#iqNote').textContent = `Based on your best scores across ${vals.length}/10 games. Play more for a better estimate!`; }
+  else { $('#iqNum').textContent = '--'; $('#iqNote').textContent = `Play ${3 - vals.length} more game${3 - vals.length === 1 ? '' : 's'} to unlock your score`; }
+}
+
+function startGame(g) {
+  cur = g;
+  $('#hub').classList.add('hidden'); $('#game').classList.remove('hidden'); $('#modal').classList.add('hidden');
+  $('#gTitle').textContent = g.icon + ' ' + g.name;
+  $('#tbar').parentElement.style.visibility = g.time ? 'visible' : 'hidden';
+  api = {
+    dead: false, locked: false, score: 0, round: 0, total: 10, timerId: 0, cleans: [], ans: null, reveal: null,
+    hud() { $('#gRound').textContent = `Round ${Math.min(this.round + 1, this.total)} / ${this.total}`; $('#gScore').textContent = this.score; $('#bar').style.width = (this.round / this.total * 100) + '%'; },
+    onClean(f) { this.cleans.push(f); },
+    runClean() { this.cleans.forEach(f => f()); this.cleans = []; this.reveal = null; this.ans = null; },
+    startTimer(sec) {
+      this.stopTimer(); const t0 = performance.now(), bar = $('#tbar'); bar.style.opacity = 1;
+      const tick = () => { if (this.dead) return; const p = (performance.now() - t0) / (sec * 1000); bar.style.width = Math.max(0, 100 - p * 100) + '%'; if (p >= 1) this.answer(false, true); else this.timerId = requestAnimationFrame(tick); };
+      this.timerId = requestAnimationFrame(tick);
+    },
+    stopTimer() { cancelAnimationFrame(this.timerId); $('#tbar').style.opacity = .2; },
+    async answer(ok, timeUp) {
+      if (this.locked || this.dead) return; this.locked = true; this.stopTimer();
+      if (ok) this.score += 10; else if (this.reveal) this.reveal();
+      const fb = $('#fb'); fb.className = ok ? 'ok' : 'bad';
+      fb.textContent = ok ? '✔ Correct!' : (timeUp ? '⏱ Time up!' : '✘ Not quite') + (this.ans != null ? ' — answer: ' + this.ans : '');
+      this.round++; this.hud();
+      await sleep(ok ? 650 : 1300); if (this.dead) return;
+      if (this.round >= this.total) return finish();
+      nextRound();
+    }
+  };
+  if (g.setup) g.setup(api);
+  api.hud(); nextRound();
+}
+
+function nextRound() {
+  api.runClean(); api.locked = false;
+  $('#stage').innerHTML = ''; $('#fb').textContent = ''; $('#fb').className = '';
+  cur.round($('#stage'), api, api.round);
+  api.hud();
+  if (cur.time) api.startTimer(typeof cur.time === 'function' ? cur.time(api.round) : cur.time);
+}
+
+function finish() {
+  api.stopTimer(); api.runClean();
+  const b = best(); if (b[cur.id] == null || api.score > b[cur.id]) b[cur.id] = api.score;
+  localStorage.setItem('nc_best', JSON.stringify(b));
+  const s = api.score;
+  $('#mTitle').textContent = s >= 90 ? '🏆 Genius level!' : s >= 70 ? '🔥 Sharp mind!' : s >= 40 ? '👍 Nice work!' : '💪 Keep training!';
+  $('#mScore').textContent = s + '/100';
+  $('#mMsg').textContent = `Personal best: ${b[cur.id]}/100`;
+  $('#modal').classList.remove('hidden');
+}
+
+function toMenu() {
+  if (api) { api.dead = true; api.stopTimer(); api.runClean(); }
+  $('#modal').classList.add('hidden'); $('#game').classList.add('hidden'); $('#hub').classList.remove('hidden');
+  renderHub();
+}
+$('#backBtn').onclick = toMenu;
+$('#toMenu').onclick = toMenu;
+$('#again').onclick = () => { api.dead = true; startGame(cur); };
+$('#resetBtn').onclick = () => { if (confirm('Reset all your scores?')) { localStorage.removeItem('nc_best'); renderHub(); } };
+renderHub();
+</script>
+</body>
+</html>
